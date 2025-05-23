@@ -452,19 +452,19 @@ subroutine interpolate()
                     delta_y=dble(ey(alpha))*dt
 
             f0 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), f_post(inter_x(i,1), inter_y(j,1), alpha), f_post(inter_x(i,1), inter_y(j,2)&
-                , alpha), f_post(inter_x(i,1), inter_y(j,3), alpha))
+                , f_post(inter_x(i,1), inter_y(j,1), alpha), f_post(inter_x(i,1), inter_y(j,2), alpha)&
+                , f_post(inter_x(i,1), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             f1 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), f_post(inter_x(i,2), inter_y(j,1), alpha), f_post(inter_x(i,2), inter_y(j,2)&
-                , alpha), f_post(inter_x(i,2), inter_y(j,3), alpha))
+                , f_post(inter_x(i,2), inter_y(j,1), alpha), f_post(inter_x(i,2), inter_y(j,2), alpha)&
+                , f_post(inter_x(i,2), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             f2 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), f_post(inter_x(i,3), inter_y(j,1), alpha), f_post(inter_x(i,3), inter_y(j,2)&
-                , alpha), f_post(inter_x(i,3), inter_y(j,3), alpha))
+                , f_post(inter_x(i,3), inter_y(j,1), alpha), f_post(inter_x(i,3), inter_y(j,2), alpha)&
+                , f_post(inter_x(i,3), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             f(i, j, alpha) = interpolateF(xGrid(inter_x(i,1))+delta_x, xGrid(inter_x(i,2))+delta_x, &
-                            xGrid(inter_x(i,3))+delta_x, xGrid(inter_x(i,2)), f0, f1, f2)
+                            xGrid(inter_x(i,3))+delta_x, f0, f1, f2, xGrid(inter_x(i,2)))
 
                 end do
             enddo
@@ -478,19 +478,19 @@ subroutine interpolate()
                     delta_y=dble(ey(alpha))*dt
 
             g0 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), g_post(inter_x(i,1), inter_y(j,1), alpha), g_post(inter_x(i,1), inter_y(j,2)&
-                , alpha), g_post(inter_x(i,1), inter_y(j,3), alpha))
+                , g_post(inter_x(i,1), inter_y(j,1), alpha), g_post(inter_x(i,1), inter_y(j,2), alpha)&
+                , g_post(inter_x(i,1), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             g1 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), g_post(inter_x(i,2), inter_y(j,1), alpha), g_post(inter_x(i,2), inter_y(j,2)&
-                , alpha), g_post(inter_x(i,2), inter_y(j,3), alpha))
+                , g_post(inter_x(i,2), inter_y(j,1), alpha), g_post(inter_x(i,2), inter_y(j,2), alpha)&
+                , g_post(inter_x(i,2), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             g2 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                , yGrid(inter_y(j,2)), g_post(inter_x(i,3), inter_y(j,1), alpha), g_post(inter_x(i,3), inter_y(j,2)&
-                , alpha), g_post(inter_x(i,3), inter_y(j,3), alpha))
+                , g_post(inter_x(i,3), inter_y(j,1), alpha), g_post(inter_x(i,3), inter_y(j,2), alpha)&
+                , g_post(inter_x(i,3), inter_y(j,3), alpha), yGrid(inter_y(j,2)))
 
             g(i, j, alpha) = interpolateF(xGrid(inter_x(i,1))+delta_x, xGrid(inter_x(i,2))+delta_x, &
-                            xGrid(inter_x(i,3))+delta_x, xGrid(inter_x(i,2)), g0, g1, g2)
+                            xGrid(inter_x(i,3))+delta_x, g0, g1, g2 ,xGrid(inter_x(i,2)))
                 enddo
             end do
         end do
@@ -498,7 +498,7 @@ subroutine interpolate()
 end subroutine
 
 !!NOTE: consider using compiler-specific directives to suggest inlining if necessary.
-pure function interpolateF(x0, x1, x2, x, f0, f1, f2) result(f_interp)
+pure function interpolateF(x0, x1, x2, f0, f1, f2, x) result(f_interp)
     implicit none
     !$acc routine (interpolateF) seq
     real(kind=8), intent(in) :: x0, x1, x2, x, f0, f1, f2
