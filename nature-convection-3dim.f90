@@ -124,15 +124,6 @@ subroutine initial()
     write(*,*)  gbeta
     write(*,*) "    "
 
-    ! Compute grid spacing in system LB
-    xGrid(1:nx) = xGrid(1:nx)-dx0/2.0d0
-    yGrid(1:ny) = yGrid(1:ny)-dx0/2.0d0
-    zGrid(1:nz) = zGrid(1:nz)-dx0/2.0d0
-    xGrid=xGrid*length_LB
-    yGrid=yGrid*length_LB
-    zGrid=zGrid*length_LB
-    write(*,*)"dt=", dt
-    write(*,*)"xGrid(1)=", xGrid(1)
     ! Calculate relaxation time
     tauf = viscosity_LB * 3.0d0 + 0.5d0
     write(*,*) "tauf =", real(tauf)
@@ -251,7 +242,7 @@ program main
     call cpu_time(timestart)
 
     call initial()
-!$acc data copy(u,v,w,rho,temp) copyin(xGrid,yGrid,zGrid,ex,ey,ez,omega_U,omega_T,f,g,inter) &
+!$acc data copy(u,v,w,rho,temp) copyin(xGrid,yGrid,zGrid,ex,ey,ez,omega_U,omega_T,f,g,inter_x,inter_y,inter_z) &
 !$acc create(g_post,f_post,up,vp,wp,utemp,Fz)
     do while(((errorU > epsU).or.(errorT > epsT)).AND.(itc < itc_max))
 
@@ -606,9 +597,9 @@ subroutine interploate()
         do j=1, ny
             do i=1, nx
                 do alpha=1, 18
-                    delta_x=dble(ex(alpha))*dt
-                    delta_y=dble(ey(alpha))*dt
-                    delta_z=dble(ez(alpha))*dt
+                    delta_x=dble(ex(alpha))*dt0
+                    delta_y=dble(ey(alpha))*dt0
+                    delta_z=dble(ez(alpha))*dt0
 !------------------------------------------yoz------------------------------------------------------------------------
     if(alpha==5 .or. alpha==6 .or. alpha==15 .or. alpha==16 .or. alpha==17 .or. alpha==18)then
         f0 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
@@ -680,9 +671,9 @@ subroutine interploate()
         do j=1, ny
             do i=1, nx
                 do alpha=1, 6
-                    delta_x=dble(ex(alpha))*dt
-                    delta_y=dble(ey(alpha))*dt
-                    delta_z=dble(ez(alpha))*dt
+                    delta_x=dble(ex(alpha))*dt0
+                    delta_y=dble(ey(alpha))*dt0
+                    delta_z=dble(ez(alpha))*dt0
     if(alpha==3 .or. alpha==4)then
         g(i,j,k,alpha)=interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
                                     , g_post(inter_x(i,2),inter_y(j,1),inter_z(k,2),alpha)&
