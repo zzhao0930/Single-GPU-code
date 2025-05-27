@@ -112,7 +112,6 @@ subroutine initial()
 
     ! Calculate viscosity based on Reynolds number in 0 system
     viscosity0 = Ma*length0*dsqrt(Pr)/dsqrt(3.0d0*Ra)
-
     write(*,*) "viscosity0 = ", real(viscosity0)
     write(*,*) "    "
 
@@ -129,14 +128,6 @@ subroutine initial()
     write(*,*)  gbeta
     write(*,*) "    "
 
-    ! Compute grid spacing in system LB
-    yGrid = yGrid-dy(1)/2.0d0
-    xGrid = xGrid-dx(1)/2.0d0
-
-    xGrid=xGrid*length_LB
-    yGrid=yGrid*length_LB
-    write(*,*)"dt=", dt
-    write(*,*)"xGrid(1)=", xGrid(1)
     ! Calculate relaxation time
     tauf = viscosity_LB * 3.0d0 + 0.5d0
     write(*,*) "tauf =", real(tauf)
@@ -448,8 +439,8 @@ subroutine interpolate()
         do j = 1, ny
             do i = 1, nx
                 do alpha = 1, 8
-                    delta_x=dble(ex(alpha))*dt
-                    delta_y=dble(ey(alpha))*dt
+                    delta_x=dble(ex(alpha))*dt0
+                    delta_y=dble(ey(alpha))*dt0
 
             f0 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
                 , f_post(inter_x(i,1), inter_y(j,1), alpha), f_post(inter_x(i,1), inter_y(j,2), alpha)&
@@ -474,8 +465,8 @@ subroutine interpolate()
         do j = 1, ny
             do i = 1, nx
                 do alpha = 1, 4
-                    delta_x=dble(ex(alpha))*dt
-                    delta_y=dble(ey(alpha))*dt
+                    delta_x=dble(ex(alpha))*dt0
+                    delta_y=dble(ey(alpha))*dt0
 
             g0 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
                 , g_post(inter_x(i,1), inter_y(j,1), alpha), g_post(inter_x(i,1), inter_y(j,2), alpha)&
