@@ -1,3 +1,5 @@
+#define Lagrange2
+!#define Lagrange4
 module commondata
         implicit none
 
@@ -58,9 +60,13 @@ module commondata
 
         ! Additional MRT parameters
         real(kind=8) :: Snu, Sq, sig_k
-
+#ifdef Lagrange2
         integer(kind=4) :: inter_x(nx,3), inter_y(ny,3)
+#endif
 
+#ifdef Lagrange4
+        integer(kind=4) :: inter_x(nx,5), inter_y(ny,5)
+#endif
 end module commondata
 
 subroutine initial()
@@ -211,6 +217,7 @@ subroutine initial()
         end if
     enddo
 
+#ifdef Lagrange2
     do j = 1, ny
         if(j == 1)then
             inter_y(j,:) = (/j, j+1, j+2/)
@@ -222,42 +229,44 @@ subroutine initial()
             inter_y(j,:) = (/j-1, j, j+1/)
         end if
     enddo
-!    do i = 1, nx
-!        if(i == 1)then
-!            inter_x(i,:) = (/i, i+1, i+2, i+3, i+4/)
-!
-!        elseif(i == 2)then
-!            inter_x(i,:) = (/i-1, i, i+1, i+2, i+3/)
-!
-!        elseif(i == nx-1)then
-!            inter_x(i,:) = (/i-3, i-2, i-1, i, i+1/)
-!
-!        elseif(i == nx)then
-!            inter_x(i,:) = (/i-4, i-3, i-2, i-1, i/)
-!
-!        else
-!            inter_x(i,:) = (/i-2, i-1, i, i+1, i+2/)
-!        end if
-!    enddo
-!
-!    do j = 1, ny
-!        if(j == 1)then
-!            inter_y(j,:) = (/j, j+1, j+2, j+3, j+4/)
-!
-!        elseif(j == 2)then
-!            inter_y(j,:) = (/j-1, j, j+1, j+2, j+3/)
-!
-!        elseif(j == ny-1)then
-!            inter_y(j,:) = (/j-3, j-2, j-1, j, j+1/)
-!
-!        elseif(j == ny)then
-!            inter_y(j,:) = (/j-4, j-3, j-2, j-1, j/)
-!
-!        else
-!            inter_y(j,:) = (/j-2, j-1, j, j+1, j+2/)
-!        end if
-!    enddo
+#endif
+#ifdef Lagrange4
+    do i = 1, nx
+        if(i == 1)then
+            inter_x(i,:) = (/i, i+1, i+2, i+3, i+4/)
 
+        elseif(i == 2)then
+            inter_x(i,:) = (/i-1, i, i+1, i+2, i+3/)
+
+        elseif(i == nx-1)then
+            inter_x(i,:) = (/i-3, i-2, i-1, i, i+1/)
+
+        elseif(i == nx)then
+            inter_x(i,:) = (/i-4, i-3, i-2, i-1, i/)
+
+        else
+            inter_x(i,:) = (/i-2, i-1, i, i+1, i+2/)
+        end if
+    enddo
+
+    do j = 1, ny
+        if(j == 1)then
+            inter_y(j,:) = (/j, j+1, j+2, j+3, j+4/)
+
+        elseif(j == 2)then
+            inter_y(j,:) = (/j-1, j, j+1, j+2, j+3/)
+
+        elseif(j == ny-1)then
+            inter_y(j,:) = (/j-3, j-2, j-1, j, j+1/)
+
+        elseif(j == ny)then
+            inter_y(j,:) = (/j-4, j-3, j-2, j-1, j/)
+
+        else
+            inter_y(j,:) = (/j-2, j-1, j, j+1, j+2/)
+        end if
+    enddo
+#endif
     return
 end subroutine initial
 
@@ -279,8 +288,12 @@ program main
         call collision_U()
 
         call collision_T()
-
+#ifdef Lagrange2
         call interpolate()
+#endif
+#ifdef Lagrange4
+        call interpolate_L5()
+#endif
 
         call bounceback_u()
 
@@ -451,7 +464,7 @@ subroutine collision_T()
 
     return
 end subroutine collision_T
-
+#ifdef Lagrange2
 subroutine interpolate()
     use commondata
     implicit none
@@ -511,123 +524,124 @@ subroutine interpolate()
         end do
 !$acc end parallel loop
 end subroutine
+#endif
+#ifdef Lagrange4
+subroutine interpolate_L5()
+    use commondata
+    implicit none
 
-!subroutine interpolate_L5()
-!    use commondata
-!    implicit none
-!
-!    real(kind=8) :: interpolateF5
-!    real(kind=8) :: delta_x, delta_y
-!    integer(kind=4) :: i, j, alpha
-!    real(kind=8) :: f0, f1, f2, f3, f4
-!    real(kind=8) :: g0, g1, g2, g3, g4
-!
-!!$acc routine(interpolateF5) seq
-!
-!!$acc parallel loop present(f,f_post,ex,ey,xGrid,yGrid,inter_x,inter_y) gang vector collapse(2) async(1)
-!    do j = 1, ny
-!        do i = 1, nx
-!            do alpha = 1, 8
-!                delta_x = dble(ex(alpha)) * dt0
-!                delta_y = dble(ey(alpha)) * dt0
-!
-!                f0 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    f_post(inter_x(i,1), inter_y(j,1), alpha), f_post(inter_x(i,1), inter_y(j,2), alpha), &
-!                    f_post(inter_x(i,1), inter_y(j,3), alpha), f_post(inter_x(i,1), inter_y(j,4), alpha), &
-!                    f_post(inter_x(i,1), inter_y(j,5), alpha), yGrid(j))
-!
-!                f1 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    f_post(inter_x(i,2), inter_y(j,1), alpha), f_post(inter_x(i,2), inter_y(j,2), alpha), &
-!                    f_post(inter_x(i,2), inter_y(j,3), alpha), f_post(inter_x(i,2), inter_y(j,4), alpha), &
-!                    f_post(inter_x(i,2), inter_y(j,5), alpha), yGrid(j))
-!
-!                f2 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    f_post(inter_x(i,3), inter_y(j,1), alpha), f_post(inter_x(i,3), inter_y(j,2), alpha), &
-!                    f_post(inter_x(i,3), inter_y(j,3), alpha), f_post(inter_x(i,3), inter_y(j,4), alpha), &
-!                    f_post(inter_x(i,3), inter_y(j,5), alpha), yGrid(j))
-!
-!                f3 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    f_post(inter_x(i,4), inter_y(j,1), alpha), f_post(inter_x(i,4), inter_y(j,2), alpha), &
-!                    f_post(inter_x(i,4), inter_y(j,3), alpha), f_post(inter_x(i,4), inter_y(j,4), alpha), &
-!                    f_post(inter_x(i,4), inter_y(j,5), alpha), yGrid(j))
-!
-!                f4 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    f_post(inter_x(i,5), inter_y(j,1), alpha), f_post(inter_x(i,5), inter_y(j,2), alpha), &
-!                    f_post(inter_x(i,5), inter_y(j,3), alpha), f_post(inter_x(i,5), inter_y(j,4), alpha), &
-!                    f_post(inter_x(i,5), inter_y(j,5), alpha), yGrid(j))
-!
-!                f(i,j,alpha) = interpolateF5( &
-!                    xGrid(inter_x(i,1)) + delta_x, xGrid(inter_x(i,2)) + delta_x, xGrid(inter_x(i,3)) + delta_x, &
-!                    xGrid(inter_x(i,4)) + delta_x, xGrid(inter_x(i,5)) + delta_x, f0, f1, f2, f3, f4, xGrid(i) )
-!
-!            end do
-!        end do
-!    end do
-!!$acc end parallel loop
-!
-!
-!!$acc parallel loop present(g,g_post,ex,ey,xGrid,yGrid,inter_x,inter_y) gang vector collapse(2) async(2)
-!    do j = 1, ny
-!        do i = 1, nx
-!            do alpha = 1, 4
-!                delta_x = dble(ex(alpha)) * dt0
-!                delta_y = dble(ey(alpha)) * dt0
-!
-!                g0 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    g_post(inter_x(i,1), inter_y(j,1), alpha), g_post(inter_x(i,1), inter_y(j,2), alpha), &
-!                    g_post(inter_x(i,1), inter_y(j,3), alpha), g_post(inter_x(i,1), inter_y(j,4), alpha), &
-!                    g_post(inter_x(i,1), inter_y(j,5), alpha), yGrid(j))
-!
-!                g1 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    g_post(inter_x(i,2), inter_y(j,1), alpha), g_post(inter_x(i,2), inter_y(j,2), alpha), &
-!                    g_post(inter_x(i,2), inter_y(j,3), alpha), g_post(inter_x(i,2), inter_y(j,4), alpha), &
-!                    g_post(inter_x(i,2), inter_y(j,5), alpha), yGrid(j))
-!
-!                g2 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    g_post(inter_x(i,3), inter_y(j,1), alpha), g_post(inter_x(i,3), inter_y(j,2), alpha), &
-!                    g_post(inter_x(i,3), inter_y(j,3), alpha), g_post(inter_x(i,3), inter_y(j,4), alpha), &
-!                    g_post(inter_x(i,3), inter_y(j,5), alpha), yGrid(j))
-!
-!                g3 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    g_post(inter_x(i,4), inter_y(j,1), alpha), g_post(inter_x(i,4), inter_y(j,2), alpha), &
-!                    g_post(inter_x(i,4), inter_y(j,3), alpha), g_post(inter_x(i,4), inter_y(j,4), alpha), &
-!                    g_post(inter_x(i,4), inter_y(j,5), alpha), yGrid(j))
-!
-!                g4 = interpolateF5( &
-!                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
-!                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
-!                    g_post(inter_x(i,5), inter_y(j,1), alpha), g_post(inter_x(i,5), inter_y(j,2), alpha), &
-!                    g_post(inter_x(i,5), inter_y(j,3), alpha), g_post(inter_x(i,5), inter_y(j,4), alpha), &
-!                    g_post(inter_x(i,5), inter_y(j,5), alpha), yGrid(j))
-!
-!                g(i,j,alpha) = interpolateF5( &
-!                    xGrid(inter_x(i,1)) + delta_x, xGrid(inter_x(i,2)) + delta_x, xGrid(inter_x(i,3)) + delta_x, &
-!                    xGrid(inter_x(i,4)) + delta_x, xGrid(inter_x(i,5)) + delta_x, g0, g1, g2, g3, g4, xGrid(i) )
-!
-!            end do
-!        end do
-!    end do
-!!$acc end parallel loop
-!end subroutine interpolate_L5
+    real(kind=8) :: interpolateF5
+    real(kind=8) :: delta_x, delta_y
+    integer(kind=4) :: i, j, alpha
+    real(kind=8) :: f0, f1, f2, f3, f4
+    real(kind=8) :: g0, g1, g2, g3, g4
 
+!$acc routine(interpolateF5) seq
+
+!$acc parallel loop present(f,f_post,ex,ey,xGrid,yGrid,inter_x,inter_y) gang vector collapse(2) async(1)
+    do j = 1, ny
+        do i = 1, nx
+            do alpha = 1, 8
+                delta_x = dble(ex(alpha)) * dt0
+                delta_y = dble(ey(alpha)) * dt0
+
+                f0 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    f_post(inter_x(i,1), inter_y(j,1), alpha), f_post(inter_x(i,1), inter_y(j,2), alpha), &
+                    f_post(inter_x(i,1), inter_y(j,3), alpha), f_post(inter_x(i,1), inter_y(j,4), alpha), &
+                    f_post(inter_x(i,1), inter_y(j,5), alpha), yGrid(j))
+
+                f1 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    f_post(inter_x(i,2), inter_y(j,1), alpha), f_post(inter_x(i,2), inter_y(j,2), alpha), &
+                    f_post(inter_x(i,2), inter_y(j,3), alpha), f_post(inter_x(i,2), inter_y(j,4), alpha), &
+                    f_post(inter_x(i,2), inter_y(j,5), alpha), yGrid(j))
+
+                f2 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    f_post(inter_x(i,3), inter_y(j,1), alpha), f_post(inter_x(i,3), inter_y(j,2), alpha), &
+                    f_post(inter_x(i,3), inter_y(j,3), alpha), f_post(inter_x(i,3), inter_y(j,4), alpha), &
+                    f_post(inter_x(i,3), inter_y(j,5), alpha), yGrid(j))
+
+                f3 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    f_post(inter_x(i,4), inter_y(j,1), alpha), f_post(inter_x(i,4), inter_y(j,2), alpha), &
+                    f_post(inter_x(i,4), inter_y(j,3), alpha), f_post(inter_x(i,4), inter_y(j,4), alpha), &
+                    f_post(inter_x(i,4), inter_y(j,5), alpha), yGrid(j))
+
+                f4 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    f_post(inter_x(i,5), inter_y(j,1), alpha), f_post(inter_x(i,5), inter_y(j,2), alpha), &
+                    f_post(inter_x(i,5), inter_y(j,3), alpha), f_post(inter_x(i,5), inter_y(j,4), alpha), &
+                    f_post(inter_x(i,5), inter_y(j,5), alpha), yGrid(j))
+
+                f(i,j,alpha) = interpolateF5( &
+                    xGrid(inter_x(i,1)) + delta_x, xGrid(inter_x(i,2)) + delta_x, xGrid(inter_x(i,3)) + delta_x, &
+                    xGrid(inter_x(i,4)) + delta_x, xGrid(inter_x(i,5)) + delta_x, f0, f1, f2, f3, f4, xGrid(i) )
+
+            end do
+        end do
+    end do
+!$acc end parallel loop
+
+
+!$acc parallel loop present(g,g_post,ex,ey,xGrid,yGrid,inter_x,inter_y) gang vector collapse(2) async(2)
+    do j = 1, ny
+        do i = 1, nx
+            do alpha = 1, 4
+                delta_x = dble(ex(alpha)) * dt0
+                delta_y = dble(ey(alpha)) * dt0
+
+                g0 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    g_post(inter_x(i,1), inter_y(j,1), alpha), g_post(inter_x(i,1), inter_y(j,2), alpha), &
+                    g_post(inter_x(i,1), inter_y(j,3), alpha), g_post(inter_x(i,1), inter_y(j,4), alpha), &
+                    g_post(inter_x(i,1), inter_y(j,5), alpha), yGrid(j))
+
+                g1 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    g_post(inter_x(i,2), inter_y(j,1), alpha), g_post(inter_x(i,2), inter_y(j,2), alpha), &
+                    g_post(inter_x(i,2), inter_y(j,3), alpha), g_post(inter_x(i,2), inter_y(j,4), alpha), &
+                    g_post(inter_x(i,2), inter_y(j,5), alpha), yGrid(j))
+
+                g2 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    g_post(inter_x(i,3), inter_y(j,1), alpha), g_post(inter_x(i,3), inter_y(j,2), alpha), &
+                    g_post(inter_x(i,3), inter_y(j,3), alpha), g_post(inter_x(i,3), inter_y(j,4), alpha), &
+                    g_post(inter_x(i,3), inter_y(j,5), alpha), yGrid(j))
+
+                g3 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    g_post(inter_x(i,4), inter_y(j,1), alpha), g_post(inter_x(i,4), inter_y(j,2), alpha), &
+                    g_post(inter_x(i,4), inter_y(j,3), alpha), g_post(inter_x(i,4), inter_y(j,4), alpha), &
+                    g_post(inter_x(i,4), inter_y(j,5), alpha), yGrid(j))
+
+                g4 = interpolateF5( &
+                    yGrid(inter_y(j,1)) + delta_y, yGrid(inter_y(j,2)) + delta_y, yGrid(inter_y(j,3)) + delta_y, &
+                    yGrid(inter_y(j,4)) + delta_y, yGrid(inter_y(j,5)) + delta_y, &
+                    g_post(inter_x(i,5), inter_y(j,1), alpha), g_post(inter_x(i,5), inter_y(j,2), alpha), &
+                    g_post(inter_x(i,5), inter_y(j,3), alpha), g_post(inter_x(i,5), inter_y(j,4), alpha), &
+                    g_post(inter_x(i,5), inter_y(j,5), alpha), yGrid(j))
+
+                g(i,j,alpha) = interpolateF5( &
+                    xGrid(inter_x(i,1)) + delta_x, xGrid(inter_x(i,2)) + delta_x, xGrid(inter_x(i,3)) + delta_x, &
+                    xGrid(inter_x(i,4)) + delta_x, xGrid(inter_x(i,5)) + delta_x, g0, g1, g2, g3, g4, xGrid(i) )
+
+            end do
+        end do
+    end do
+!$acc end parallel loop
+end subroutine interpolate_L5
+#endif
 
 pure function interpolateF2(x0, x1, x2, f0, f1, f2, x) result(f_interp)
     implicit none
