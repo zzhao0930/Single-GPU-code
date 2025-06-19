@@ -204,7 +204,7 @@ subroutine initial()
             end do
         enddo
     enddo
-
+#ifdef Lagrange2
     do i = 1, nx
         if(i == 1)then
             inter_x(i,:) = (/i, i+1, i+2/)
@@ -217,7 +217,6 @@ subroutine initial()
         end if
     enddo
 
-#ifdef Lagrange2
     do j = 1, ny
         if(j == 1)then
             inter_y(j,:) = (/j, j+1, j+2/)
