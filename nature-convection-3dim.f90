@@ -2,7 +2,7 @@ module commondata
         implicit none
 
         ! Grid parameters
-        integer(kind=4), parameter :: nx=257, ny=nx, nz=nx
+        integer(kind=4), parameter :: nx=129, ny=nx, nz=nx
         integer(kind=4), parameter :: nxHalf=(nx-1)/2+1, nyHalf=(ny-1)/2+1, nzHalf=(nz-1)/2+1
 
         real(kind=8), parameter :: Ra=1e6          !Rayleigh number
@@ -27,7 +27,7 @@ module commondata
 
         ! Iteration control
         integer(kind=4) :: itc = 0            ! Current iteration count
-        integer(kind=4), parameter :: itc_max = 20000 ! Maximum iterations
+        integer(kind=4), parameter :: itc_max = 200000000 ! Maximum iterations
 
         ! Convergence criteria
         real(kind=8) :: errorU, errorT              ! Current error
@@ -203,9 +203,9 @@ subroutine initial()
 
     do i = 1, nx
         if(i == 1)then
-            inter_x(i,:) = (/i+1, i, i+2/)
+            inter_x(i,:) = (/i, i+1, i+2/)
         elseif(i == nx)then
-            inter_x(i,:) = (/i-1, i, i-2/)
+            inter_x(i,:) = (/i-2, i-1, i/)
         else
             inter_x(i,:) = (/i-1, i, i+1/)
         end if
@@ -213,9 +213,9 @@ subroutine initial()
 
     do j = 1, ny
         if(j == 1)then
-            inter_y(j,:) = (/j+1, j, j+2/)
+            inter_y(j,:) = (/j, j+1, j+2/)
         elseif(j == ny)then
-            inter_y(j,:) = (/j-1, j, j-2/)
+            inter_y(j,:) = (/j-2, j-1, j/)
         else
             inter_y(j,:) = (/j-1, j, j+1/)
         end if
@@ -223,9 +223,9 @@ subroutine initial()
 
     do k = 1, nz
         if(k == 1)then
-            inter_z(k,:) = (/k+1, k, k+2/)
+            inter_z(k,:) = (/k, k+1, k+2/)
         elseif(k == nz)then
-            inter_z(k,:) = (/k-1, k, k-2/)
+            inter_z(k,:) = (/k-2, k-1, k/)
         else
             inter_z(k,:) = (/k-1, k, k+1/)
         end if
@@ -603,62 +603,62 @@ subroutine interploate()
 !------------------------------------------yoz------------------------------------------------------------------------
     if(alpha==5 .or. alpha==6 .or. alpha==15 .or. alpha==16 .or. alpha==17 .or. alpha==18)then
         f0 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,2),inter_y(j,1),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,2), inter_y(j,1),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,2),inter_y(j,1),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(i, inter_y(j,1), inter_z(k,1), alpha)&
+                    , f_post(i, inter_y(j,1), inter_z(k,2), alpha)&
+                    , f_post(i, inter_y(j,1), inter_z(k,3), alpha), zGrid(k))
 
         f1 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,2), inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(i, inter_y(j,2), inter_z(k,1), alpha)&
+                    , f_post(i, inter_y(j,2), inter_z(k,2), alpha)&
+                    , f_post(i, inter_y(j,2), inter_z(k,3), alpha), zGrid(k))
 
         f2 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,2),inter_y(j,3),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,2), inter_y(j,3),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,2),inter_y(j,3),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(i, inter_y(j,3), inter_z(k,1), alpha)&
+                    , f_post(i, inter_y(j,3), inter_z(k,2), alpha)&
+                    , f_post(i, inter_y(j,3), inter_z(k,3), alpha), zGrid(k))
 
         f(i,j,k,alpha) = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))&
-                    +delta_y, f0, f1, f2, yGrid(inter_y(j,2)))
+                    +delta_y, f0, f1, f2, yGrid(j))
 
 !-----------------------------------------xoz---------------------------------------------------------------------------
     else if(alpha==1 .or. alpha==2 .or. alpha==11 .or. alpha==12 .or. alpha==13 .or. alpha==14)then
         f0 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,1),inter_y(j,2),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,1), inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,1),inter_y(j,2),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(inter_x(i,1), j, inter_z(k,1), alpha)&
+                    , f_post(inter_x(i,1), j, inter_z(k,2), alpha)&
+                    , f_post(inter_x(i,1), j, inter_z(k,3), alpha), zGrid(k))
 
         f1 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(inter_x(i,2), j, inter_z(k,1),alpha)&
+                    , f_post(inter_x(i,2), j, inter_z(k,2),alpha)&
+                    , f_post(inter_x(i,2), j, inter_z(k,3),alpha), zGrid(k))
 
         f2 = interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                    , f_post(inter_x(i,3),inter_y(j,2),inter_z(k,1),alpha)&
-                    , f_post(inter_x(i,3),inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,3),inter_y(j,2),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                    , f_post(inter_x(i,3), j, inter_z(k,1), alpha)&
+                    , f_post(inter_x(i,3), j, inter_z(k,2), alpha)&
+                    , f_post(inter_x(i,3), j, inter_z(k,3), alpha), zGrid(k))
 
         f(i,j,k,alpha) = interpolateF(xGrid(inter_x(i,1))+delta_x, xGrid(inter_x(i,2))+delta_x, xGrid(inter_x(i,3))&
-                    +delta_x, f0, f1, f2, xGrid(inter_x(i,2)))
+                    +delta_x, f0, f1, f2, xGrid(i))
 
 !-----------------------------------------xoy---------------------------------------------------------------------------
     else if(alpha==3 .or. alpha==4 .or. alpha==7 .or. alpha==8 .or. alpha==9 .or. alpha==10)then
         f0 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                    , f_post(inter_x(i,1),inter_y(j,1),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,1),inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,1),inter_y(j,3),inter_z(k,2),alpha), yGrid(inter_y(j,2)))
+                    , f_post(inter_x(i,1), inter_y(j,1), k, alpha)&
+                    , f_post(inter_x(i,1), inter_y(j,2), k, alpha)&
+                    , f_post(inter_x(i,1), inter_y(j,3), k, alpha), yGrid(j))
 
         f1 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                   , f_post(inter_x(i,2),inter_y(j,1),inter_z(k,2),alpha)&
-                   , f_post(inter_x(i,2),inter_y(j,2),inter_z(k,2),alpha)&
-                   , f_post(inter_x(i,2),inter_y(j,3),inter_z(k,2),alpha), yGrid(inter_y(j,2)))
+                   , f_post(inter_x(i,2), inter_y(j,1), k, alpha)&
+                   , f_post(inter_x(i,2), inter_y(j,2), k, alpha)&
+                   , f_post(inter_x(i,2), inter_y(j,3), k, alpha), yGrid(j))
 
         f2 = interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                    , f_post(inter_x(i,3),inter_y(j,1),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,3),inter_y(j,2),inter_z(k,2),alpha)&
-                    , f_post(inter_x(i,3),inter_y(j,3),inter_z(k,2),alpha), yGrid(inter_y(j,2)))
+                    , f_post(inter_x(i,3), inter_y(j,1), k, alpha)&
+                    , f_post(inter_x(i,3), inter_y(j,2), k, alpha)&
+                    , f_post(inter_x(i,3), inter_y(j,3), k, alpha), yGrid(j))
 
         f(i,j,k,alpha) = interpolateF(xGrid(inter_x(i,1))+delta_x, xGrid(inter_x(i,2))+delta_x, xGrid(inter_x(i,3)) &
-                    +delta_x, f0, f1, f2, xGrid(inter_x(i,2)))
+                    +delta_x, f0, f1, f2, xGrid(i))
     end if
                 end do
             end do
@@ -676,21 +676,21 @@ subroutine interploate()
                     delta_z=dble(ez(alpha))*dt0
     if(alpha==3 .or. alpha==4)then
         g(i,j,k,alpha)=interpolateF(yGrid(inter_y(j,1))+delta_y, yGrid(inter_y(j,2))+delta_y, yGrid(inter_y(j,3))+delta_y&
-                                    , g_post(inter_x(i,2),inter_y(j,1),inter_z(k,2),alpha)&
-                                    , g_post(inter_x(i,2),inter_y(j,2),inter_z(k,2),alpha)&
-                                    , g_post(inter_x(i,2),inter_y(j,3),inter_z(k,2),alpha), yGrid(inter_y(j,2)))
+                                    , g_post(i, inter_y(j,1), k, alpha)&
+                                    , g_post(i, inter_y(j,2), k, alpha)&
+                                    , g_post(i, inter_y(j,3), k, alpha), yGrid(j))
 
     elseif(alpha==5 .or. alpha==6)then
         g(i,j,k,alpha)=interpolateF(zGrid(inter_z(k,1))+delta_z, zGrid(inter_z(k,2))+delta_z, zGrid(inter_z(k,3))+delta_z&
-                                    , g_post(inter_x(i,2),inter_y(j,2),inter_z(k,1),alpha)&
-                                    , g_post(inter_x(i,2),inter_y(j,2),inter_z(k,2),alpha)&
-                                    , g_post(inter_x(i,2),inter_y(j,2),inter_z(k,3),alpha), zGrid(inter_z(k,2)))
+                                    , g_post(i, j, inter_z(k,1), alpha)&
+                                    , g_post(i, j, inter_z(k,2), alpha)&
+                                    , g_post(i, j, inter_z(k,3), alpha), zGrid(k))
 
     elseif(alpha==1 .or. alpha==2)then
         g(i,j,k,alpha)=interpolateF(xGrid(inter_x(i,1))+delta_x, xGrid(inter_x(i,2))+delta_x, xGrid(inter_x(i,3))+delta_x&
-                                    , g_post(inter_x(i,1),inter_y(j,2),inter_z(k,2),alpha)&
-                                    , g_post(inter_x(i,2),inter_y(j,2),inter_z(k,2),alpha)&
-                                    , g_post(inter_x(i,3),inter_y(j,2),inter_z(k,2),alpha), xGrid(inter_x(i,2)))
+                                    , g_post(inter_x(i,1), j, k, alpha)&
+                                    , g_post(inter_x(i,2), j, k, alpha)&
+                                    , g_post(inter_x(i,3), j, k, alpha), xGrid(i))
     end if
                 end do
             end do
